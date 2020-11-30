@@ -1,4 +1,4 @@
-from _utils_logging import log_error
+from utils_logging import log_error
 
 def failsafe(func):
     def decorated_failsafe(*args, **kwargs):

@@ -8,3 +8,14 @@ def set_env_to_debug():
 
 def DATABASE_URL():
     return _database_url
+
+
+
+
+
+
+'''
+Tradebot Related
+'''
+
+STARTING_FUND = 100000

@@ -1,5 +1,5 @@
-from __GLOBAL_CONFIGS import DATABASE_URL, debug_env
-from _utils_decorators import async_failsafe, failsafe 
+from __GLOBAL_CONFIGS import DATABASE_URL, set_env_to_debug
+from utils_decorators import async_failsafe, failsafe 
 import asyncio
 
 @failsafe
@@ -10,6 +10,10 @@ def throw_shit():
 async def throw_this():
     print("YO")
     raise Exception("SHIT")
+
+
+def pr(st: str):
+    print(st)
 
 
 
