@@ -26,6 +26,11 @@ _ALPACA_STOCK_LAST_TRADE = f"{_ALPACA_MARKET}/v1/last/stocks/"
 
 class AlpacaAPI():
     def __init__(self, environment='production'):
+        '''
+        Alpaca API provides functionalities to interact with Darwin Robotic's ALPACA apis.
+        
+        :param environment: Can be 'production', 'development', etc. TODO: Create dev env and set default to dev env.
+        '''
         GLOBAL_CONFIG = get_global_config(environment)
         self._ALPACA_API_KEY = GLOBAL_CONFIG['ALPACA_API_KEY']
         self._ALPACA_API_SECRET_KEY = GLOBAL_CONFIG['ALPACA_API_SECRET_KEY']

@@ -3,9 +3,7 @@ STARTING_FUND: 100000
 
 
 # Database
-DATABASE_URL: "mongodb+srv://trading_agent:Lc2gwI5aUjnVXYoU@cluster0.y7n4w.mongodb.net/Dowwin?retryWrites=true&w=majority"
-
-
+DATABASE_URL: "mongodb+srv://dowwin_v1_api:GAdIZyP3ObL6YZhP@cluster0.lp5l4.mongodb.net/Dowwin?retryWrites=true&w=majority"
 
 # Slack
 SLACK_BOT_TOKEN: "xoxb-1518310205110-1544392027987-rY62XGdCfY9dFtN5sII2OTRm"
@@ -13,6 +11,6 @@ SLACK_BOT_TOKEN: "xoxb-1518310205110-1544392027987-rY62XGdCfY9dFtN5sII2OTRm"
 
 # Alpaca
 # Authentication for using Alpaca API.
-ALPACA_API_SECRET_KEY: '4CtS8LOFcGI0PJsO9wrU3ddBAHGPPNaAfGsom5jH'
-ALPACA_API_KEY: 'PKL7HET7GQ96FGE39LFD'
+ALPACA_API_SECRET_KEY: 'ZuBr5a4VtQSUpOI2fSOerfDWeZN7bAZzTJeDUPrC'
+ALPACA_API_KEY: 'PKJMPWBA5B23DPYRZUMK'
 

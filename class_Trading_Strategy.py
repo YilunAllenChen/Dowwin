@@ -20,7 +20,8 @@ class Linear_Regression(Trading_Strategy):
 
 
 trading_strategy_dict = {
-    0: Linear_Regression
+    -1: Trading_Strategy,
+    0:  Linear_Regression
 }
 
 
