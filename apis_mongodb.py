@@ -11,11 +11,11 @@ from utils_config import get_global_config
 
 
 class MongoAPI():
-    def __init__(self, environment='production'):
+    def __init__(self, environment='development'):
         '''
         Mongo API provides functionalities to interact with Darwin Robotics's MongoDB Atlas Cluster.
         
-        :param environment: Can be 'production', 'development', etc. TODO: Create dev env and set default to dev env.
+        :param environment: Can be 'production', 'development', etc.
         '''
         GLOBAL_CONFIG = get_global_config(environment)
         # TODO: setup environment variables here.

@@ -7,11 +7,11 @@ from utils_config import get_global_config
 
 
 class SlackAPI():
-    def __init__(self, environment='production'):
+    def __init__(self, environment='development'):
         '''
         Slack API provides functionalities to interact with Darwin Robotic's Slack Bot, Niwrad.
         
-        :param environment: Can be 'production', 'development', etc. TODO: Create dev env and set default to dev env.
+        :param environment: Can be 'production', 'development', etc.
         '''
         GLOBAL_CONFIG = get_global_config(environment)
         self.client = WebClient(token=GLOBAL_CONFIG['SLACK_BOT_TOKEN'])
