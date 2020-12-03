@@ -6,9 +6,9 @@ from utils_decorators import send_error_to_slack_on_exception
 from time import sleep
 
 
-alpaca = AlpacaAPI()
-slack = SlackAPI()
-mongo = MongoAPI()
+alpaca = AlpacaAPI(environment='production')
+slack = SlackAPI(environment='production')
+mongo = MongoAPI(environment='production')
 
 
 @send_error_to_slack_on_exception

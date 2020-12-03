@@ -8,10 +8,10 @@ Reference / API Documentation: https://alpaca.markets/docs/api-documentation/api
 import requests
 import json
 from pprint import pprint
+from utils_config import get_global_config
 
-# Authentication for using Alpaca API.
-_ALPACA_API_SECRET_KEY = '4CtS8LOFcGI0PJsO9wrU3ddBAHGPPNaAfGsom5jH'
-_ALPACA_API_KEY = 'PKL7HET7GQ96FGE39LFD'
+
+
 
 # Trading API endpoint is used for placing orders, checking account status, etc.
 _ALPACA_TRADING = 'https://paper-api.alpaca.markets'
@@ -25,9 +25,10 @@ _ALPACA_STOCK_LAST_TRADE = f"{_ALPACA_MARKET}/v1/last/stocks/"
 
 
 class AlpacaAPI():
-    def __init__(self):
-        #TODO: Setup environment variables here and let functions point to instance variables instead of global ones.
-        pass
+    def __init__(self, environment='production'):
+        GLOBAL_CONFIG = get_global_config(environment)
+        self._ALPACA_API_KEY = GLOBAL_CONFIG['ALPACA_API_KEY']
+        self._ALPACA_API_SECRET_KEY = GLOBAL_CONFIG['ALPACA_API_SECRET_KEY']
 
     def _get(self, url: str) -> dict:
         '''
@@ -39,8 +40,8 @@ class AlpacaAPI():
         TODO: 401/404 handling
         '''
         res = requests.get(url, headers={
-            'APCA-API-KEY-ID': _ALPACA_API_KEY,
-            'APCA-API-SECRET-KEY': _ALPACA_API_SECRET_KEY
+            'APCA-API-KEY-ID': self._ALPACA_API_KEY,
+            'APCA-API-SECRET-KEY': self._ALPACA_API_SECRET_KEY
         })
         return json.loads(res.content)
 
@@ -73,3 +74,8 @@ class AlpacaAPI():
         'exchange': 15, 'cond1': 0, 'cond2': 0, 'cond3': 0, 'cond4': 0, 'timestamp': 1606837442640000000}}
         '''
         return self._get(_ALPACA_STOCK_LAST_TRADE + symbol)
+
+if __name__ == "__main__":
+    alpaca = AlpacaAPI()
+    res = alpaca.get_stock_data_last_traded("MSFT")
+    print(res)
