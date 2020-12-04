@@ -2,3 +2,4 @@ pymongo
 motor
 aiohttp
 slack_sdk
+pyyaml
