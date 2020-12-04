@@ -17,6 +17,14 @@ class Linear_Regression(Trading_Strategy):
     def evaluate(self):
         return 1
 
+class Neural_Network(Trading_Strategy):
+    def __init__(self, *args, **kwargs):
+        super(Neural_Network, self).__init__(*args, **kwargs)
+        print("initing NN")
+    def setup(self):
+        self.nn = []
+    def evaluate(self):
+        return 1
 
 
 trading_strategy_dict = {
