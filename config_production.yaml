@@ -1,7 +1,3 @@
-# Trading 
-STARTING_FUND: 100000
-
-
 # Database
 DATABASE_URL: "mongodb+srv://dowwin_v1_api:GAdIZyP3ObL6YZhP@cluster0.lp5l4.mongodb.net/Dowwin?retryWrites=true&w=majority"
 
