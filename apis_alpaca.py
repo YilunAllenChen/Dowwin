@@ -17,14 +17,14 @@ from utils_config import get_global_config
 
 
 # Trading API endpoint is used for placing orders, checking account status, etc.
-_ALPACA_TRADING = 'https://paper-api.alpaca.markets'
+_alpaca_url_trading = 'https://paper-api.alpaca.markets'
 # Market API endpoint is used for acquiring market data.
-_ALPACA_MARKET = 'https://data.alpaca.markets'
+_alpaca_url_market = 'https://data.alpaca.markets'
 
 # Used to acquire account info.
-_ALPACA_ACCOUNT = f"{_ALPACA_TRADING}/v2/account"
+_alpaca_url_account = f"{_alpaca_url_trading}/v2/account"
 # Used to get the price/size/exchange data of this stock when it's last traded.
-_ALPACA_STOCK_LAST_TRADE = f"{_ALPACA_MARKET}/v1/last/stocks/"
+_alpaca_url_stock_last_traded = f"{_alpaca_url_market}/v1/last/stocks/"
 
 
 class AlpacaAPI():
@@ -68,7 +68,7 @@ class AlpacaAPI():
         'initial_margin': '0', 'maintenance_margin': '0', 'last_maintenance_margin': '0', 'sma': '0', 'daytrade_count': 0}
         NOTE: Do we need this?
         '''
-        return self._get(_ALPACA_ACCOUNT)
+        return self._get(_alpaca_url_account)
 
 
     def get_stock_data_last_traded(self,symbol: str) -> dict:
@@ -81,7 +81,7 @@ class AlpacaAPI():
         Example return: dict{'status': 'success', 'symbol': 'AAPL', 'last': {'price': 122.195, 'size': 100, 
         'exchange': 15, 'cond1': 0, 'cond2': 0, 'cond3': 0, 'cond4': 0, 'timestamp': 1606837442640000000}}
         '''
-        return self._get(_ALPACA_STOCK_LAST_TRADE + symbol)
+        return self._get(_alpaca_url_stock_last_traded + symbol)
 
 if __name__ == "__main__":
     alpaca = AlpacaAPI()

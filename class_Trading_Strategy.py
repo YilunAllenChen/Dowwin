@@ -1,6 +1,6 @@
 from utils_logging import log_error
 
-class Trading_Strategy():
+class TradingStrategy():
     '''
     Abstract class that needs to be inherited.
     '''
@@ -32,14 +32,14 @@ class Trading_Strategy():
         return {}
 
 
-class Linear_Regression(Trading_Strategy):
+class Linear_Regression(TradingStrategy):
     def __init__(self, *args, **kwargs):
         super(Linear_Regression, self).__init__(*args, **kwargs)
 
     def evaluate(self):
         return 1
 
-class Neural_Network(Trading_Strategy):
+class Neural_Network(TradingStrategy):
     def __init__(self, *args, **kwargs):
         super(Neural_Network, self).__init__(*args, **kwargs)
         print("initing NN")
@@ -48,7 +48,7 @@ class Neural_Network(Trading_Strategy):
 
 
 trading_strategy_dict = {
-    -1: Trading_Strategy,
+    -1: TradingStrategy,
     0:  Linear_Regression
 }
 
