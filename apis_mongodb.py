@@ -20,9 +20,9 @@ class MongoAPI():
         GLOBAL_CONFIG = get_global_config(environment)
         # TODO: setup environment variables here.
         self._client = pymongo.MongoClient(host=GLOBAL_CONFIG['DATABASE_URL'])
-        self._market = self._client['Dowwin']['v1/_market']
+        self._market = self._client['Dowwin']['v1/market']
         self.tradebots = self._client['Dowwin']['v1/Tradebots']
-        self._market_history = self._client['Dowwin']['v1/MockMarket']
+        self._market_history = self._client['Dowwin']['v1/market_history']
 
     @send_error_to_slack_on_exception
     def update_stock(self, data: dict, by='symb') -> None:
@@ -43,7 +43,21 @@ class MongoAPI():
         :param data: dictionary of stock market data.
         :param by: find the entry in the database that has the same specified field as the passed in data.
         '''
-        self.mock_market.update_one({by: data.get(by)}, {'$set': data}, True)
+        self._market_history.update_one({by: data.get(by)}, {'$set': data}, True)
+
+    def get_all_history_data(self, aggr = {}) -> list:
+        '''
+        Function fetches all documents in the market_history database
+        '''
+        cursor = self._market_history.find(aggr)
+        return [item for item in cursor]
+
+    def peek_history_data(self, aggr = {}) -> dict:
+        '''
+        Function fetches the top document in the market_history database
+        '''
+        cursor = self._market_history.find_one(aggr)
+        return cursor
 
 
 if __name__ == "__main__":

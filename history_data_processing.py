@@ -1,8 +1,12 @@
 '''
-This module uploads stock history data to the database.
+This module uploads the stock history data from a kaggle notebook to the database.
+Used in MEE design stage.
+
+
 To use this module:
 
-Place the stock history data under {this_directory}/Stocks, and then run this script.
+Download stock data from https://www.kaggle.com/borismarjanovic/price-volume-data-for-all-us-stocks-etfs and unzip.
+Find the Stock directory and copy over to {this_directory}/Stocks, and then run this script.
 '''
 
 from os import listdir
