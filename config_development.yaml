@@ -1,5 +1,5 @@
 # Database
-DATABASE_URL: "mongodb+srv://trading_agent:Lc2gwI5aUjnVXYoU@cluster0.y7n4w.mongodb.net/Dowwin?retryWrites=true&w=majority"
+DATABASE_URL: "mongodb+srv://dowwin_v1_api:GAdIZyP3ObL6YZhP@cluster0.lp5l4.mongodb.net/Dowwin?retryWrites=true&w=majority"
 
 # Slack
 SLACK_BOT_TOKEN: "xoxb-1518310205110-1544392027987-rY62XGdCfY9dFtN5sII2OTRm"
