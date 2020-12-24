@@ -19,9 +19,10 @@ class MongoAPI():
         '''
         GLOBAL_CONFIG = get_global_config(environment)
         # TODO: setup environment variables here.
-        self.client = pymongo.MongoClient(host=GLOBAL_CONFIG['DATABASE_URL'])
-        self.market = self.client['Dowwin']['v1/Market']
-        self.tradebots = self.client['Dowwin']['v1/Tradebots']
+        self._client = pymongo.MongoClient(host=GLOBAL_CONFIG['DATABASE_URL'])
+        self._market = self._client['Dowwin']['v1/_market']
+        self.tradebots = self._client['Dowwin']['v1/Tradebots']
+        self._market_history = self._client['Dowwin']['v1/MockMarket']
 
     @send_error_to_slack_on_exception
     def update_stock(self, data: dict, by='symb') -> None:
@@ -31,7 +32,18 @@ class MongoAPI():
         :param data: dictionary of stock market data.
         :param by: find the entry in the database that has the same specified field as the passed in data.
         '''
-        self.market.update_one({by: data.get(by)}, {'$set': data}, True)
+        self._market.update_one({by: data.get(by)}, {'$set': data}, True)
+
+
+    @send_error_to_slack_on_exception
+    def update_stock_history(self, data: dict, by='symb') -> None:
+        '''
+        Function to update the *history* stock market data. Update by name by default.
+
+        :param data: dictionary of stock market data.
+        :param by: find the entry in the database that has the same specified field as the passed in data.
+        '''
+        self.mock_market.update_one({by: data.get(by)}, {'$set': data}, True)
 
 
 if __name__ == "__main__":
