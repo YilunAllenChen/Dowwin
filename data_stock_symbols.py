@@ -53,7 +53,7 @@ stock_symbols = [
     "VRTX", "WBA", "WDAY", "WDC", "XEL", "XLNX", "ZM"
 ]
 
-full_stocks_symbol = all_stocks_symbol = {
+all_stocks_symbol = {
     "LIQT",
     "CHA",
     "BMY",
