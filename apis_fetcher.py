@@ -59,6 +59,7 @@ class Source():
 
 
 starting_time = dt.datetime.now()
+problematic_stock_list = set()
 
 
 async def task(source):
@@ -67,14 +68,16 @@ async def task(source):
             random_stock = choice(stock_symbols)
             await source.fetch(choice(stock_symbols))
         except Exception as e:
-            print(f"Exception Encountered with Source [{source.id}]: {e}")
+            print(f"Exception Encountered with Source [{source.id}] fetching {random_stock}: {e}")
+            problematic_stock_list.add(random_stock)
+            print(f"Current problematic stock list: {problematic_stock_list}")
     
 async def report(sources):
     while(True):
         calls = sum([source.counter for source in sources])
         time_passed = (dt.datetime.now() - starting_time).total_seconds()
         rate = calls / time_passed
-        print(f"Cumulative calls:  {calls}, time passed: {time_passed}, rate at {rate}/sec")
+        # print(f"Cumulative calls:  {calls}, time passed: {time_passed}, rate at {rate}/sec")
         await asyncio.sleep(3)
 
 
