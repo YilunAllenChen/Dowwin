@@ -77,8 +77,8 @@ async def report(sources):
         calls = sum([source.counter for source in sources])
         time_passed = (dt.datetime.now() - starting_time).total_seconds()
         rate = calls / time_passed
-        # print(f"Cumulative calls:  {calls}, time passed: {time_passed}, rate at {rate}/sec")
-        await asyncio.sleep(3)
+        print(f"Cumulative calls:  {calls}, time passed: {time_passed}, rate at {rate}/sec")
+        await asyncio.sleep(30)
 
 
 async def main():
