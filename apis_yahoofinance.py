@@ -120,6 +120,8 @@ class Source():
                     '(this)')[0].split(';\n}')[0].strip()
                 data = json.loads(json_str)[
                     'context']['dispatcher']['stores']['QuoteSummaryStore']
+                if data.get('symbol') == None:
+                    print('data seems to be empty? {}, html is {}'.format(data, html))
                 # return data
                 data = json.dumps(data).replace('{}', 'null')
                 data = re.sub(
@@ -155,14 +157,13 @@ async def task(source):
     dedicated_starting_ndx = int(portion * source.id)
     dedicated_ending_ndx = dedicated_starting_ndx + portion
     dedicated_list = stock_symbols[dedicated_starting_ndx:dedicated_starting_ndx+portion]
-    print(f"Source [{source.id}] is assigned stock index: {dedicated_starting_ndx}({stock_symbols[dedicated_starting_ndx]})\
-        ~ {dedicated_ending_ndx}({stock_symbols[dedicated_ending_ndx]})")
+    # print(f"Source [{source.id}] is assigned stocks: {dedicated_list}")
     while(True):
         for stock in dedicated_list:
             try:
                 await source.fetch(stock)
             except Exception as e:
-                # print(f"Exception Encountered with Source [{source.id}] fetching {random_stock}: {e}")
+                print(f"Exception Encountered with Source [{source.id}] fetching {stock}: {e}")
                 pass
     
 async def report(sources):
