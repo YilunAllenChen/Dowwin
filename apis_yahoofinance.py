@@ -9,18 +9,23 @@ import asyncio
 import re
 import json
 import datetime as dt
+from pprint import pprint
 
 from random import choice
 from data_stock_symbols import stock_symbols
 from utils_decorators import send_error_to_slack_on_exception
+from apis_mongodb import AIOMongoAPI
+
+aiomongo = AIOMongoAPI()
 
 class Problem():
     '''
     Generic Struct-like class to store timestamped exceptions.
     '''
-    def __init__(self, error_msg: str):
+    def __init__(self, error: Exception, part: str):
         self.timestamp = dt.datetime.now()
-        self.error_msg = error_msg
+        self.error = error
+        self.part = part
 
 class Source():
     '''
@@ -58,7 +63,8 @@ class Source():
     @send_error_to_slack_on_exception
     def _health_check(self) -> None:
         '''
-        TODO
+        Function performs a health check on the tradebot. If the number of Problems encountered in the last minute exceeds its specified [maximum_problems_per_minute], 
+        it will pause operating for [suspension_time_on_poor_health] seconds.
         '''
         # an error will be thrown when _health_check is executed, indicating that this source has encountered too many errors in
         # the last minute and is hence in poor health. 
@@ -69,14 +75,16 @@ class Source():
         filtered = filter(only_keep_problems_in_last_min ,self.problems)
         self.problems = [problem for problem in filtered]
         if len(self.problems) >= 10:
-            error_message = [f"{problem.timestamp.strftime('%m%d%Y %H:%M:%S')} | {type(problem.error_msg)} : {problem.error_msg}" \
+            error_message = [f"{problem.timestamp.strftime('%m%d%Y %H:%M:%S')} | {problem.part} | {problem.error}" \
                 for problem in self.problems]
             self.pause()
             raise Exception(f"Source [{self.id}] is in poor health and is hence suspended for {self.suspension_time_on_poor_health} seconds. Details: {error_message}")
             
     def _is_ready_to_fetch(self) -> bool:
         '''
-        TODO
+        Function determines whether this source is ready to fetch by checking its [status] and [next_available_time].
+
+        :return: True if source is ready and False otherwise.
         '''
         if self.status == 'running':
             return True
@@ -88,7 +96,7 @@ class Source():
 
     def pause(self) -> None:
         '''
-        TODO
+        Function sets the [status] field to 'stopped' and [next_available_time] to be [suspension_time_on_poor_health] + [now].
         '''
         if self.status == 'running':
             self.status = 'stopped'
@@ -96,12 +104,15 @@ class Source():
 
     async def fetch(self, symbol: str):
         '''
-        TODO
+        Function fetches information about a specified symbol and updates it to the database. This is an async task/coroutine.
+
+        :param symbol: symbol of stock in string format. Example: "AAPL" for Apple Inc.
         '''
         self._health_check()
         while not self._is_ready_to_fetch():
             await asyncio.sleep(1)
 
+        # get the data from remote url.
         try:
             async with self.session.get(f'https://finance.yahoo.com/quote/{symbol}') as resp:
                 html = await resp.text()
@@ -116,8 +127,22 @@ class Source():
                 data = json.loads(data)
                 self.successful_fetch_counter += 1
         except Exception as e:
-            self.problems.append(Problem(e))
+            self.problems.append(Problem(error=e, part='Fetch'))
 
+
+        # process the data
+        del data['esgScores']
+        del data['financialsTemplate']
+        del data['pageViews']
+        del data['summaryProfile']
+        del data['upgradeDowngradeHistory']
+        data['timestamp'] = dt.datetime.now()
+
+        # save the data
+        try:
+            result = await aiomongo.update_stock(data)
+        except Exception as e:
+            self.problems.append(Problem(error=e, part='Store'))
 
 starting_time = dt.datetime.now()
 
@@ -141,9 +166,10 @@ async def report(sources):
 
 
 async def main():
-    sources = [Source() for _ in range(1)]
+    num_of_sources = 1
+    sources = [Source() for _ in range(num_of_sources)]
 
-    tasks = [asyncio.ensure_future(task(sources[ndx])) for ndx in range(1)]
+    tasks = [asyncio.ensure_future(task(sources[ndx])) for ndx in range(num_of_sources)]
     tasks.append(asyncio.ensure_future(report(sources)))
 
     try:
