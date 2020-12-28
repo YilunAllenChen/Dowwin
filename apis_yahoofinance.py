@@ -101,6 +101,7 @@ class Source():
         if self.status == 'running':
             self.status = 'stopped'
             self.next_available_time = dt.datetime.now() + dt.timedelta(seconds=self.suspension_time_on_poor_health)
+            self.session = aiohttp.ClientSession()
 
     async def fetch(self, symbol: str):
         '''
@@ -171,7 +172,7 @@ async def report(sources):
         time_passed = (dt.datetime.now() - starting_time).total_seconds()
         rate = calls / time_passed
         print(f"Cumulative calls:  {calls}, time passed: {time_passed}, rate at {rate}/sec")
-        await asyncio.sleep(3)
+        await asyncio.sleep(30)
 
 
 async def main():
