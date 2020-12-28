@@ -147,14 +147,23 @@ class Source():
 starting_time = dt.datetime.now()
 
 
+num_of_sources = 20
+
+
 async def task(source):
+    portion = int(len(stock_symbols)/num_of_sources)
+    dedicated_starting_ndx = int(portion * source.id)
+    dedicated_ending_ndx = dedicated_starting_ndx + portion
+    dedicated_list = stock_symbols[dedicated_starting_ndx:dedicated_starting_ndx+portion]
+    print(f"Source [{source.id}] is assigned stock index: {dedicated_starting_ndx}({stock_symbols[dedicated_starting_ndx]})\
+        ~ {dedicated_ending_ndx}({stock_symbols[dedicated_ending_ndx]})")
     while(True):
-        try:
-            random_stock = choice(stock_symbols)
-            await source.fetch(choice(stock_symbols))
-        except Exception as e:
-            # print(f"Exception Encountered with Source [{source.id}] fetching {random_stock}: {e}")
-            pass
+        for stock in dedicated_list:
+            try:
+                await source.fetch(stock)
+            except Exception as e:
+                # print(f"Exception Encountered with Source [{source.id}] fetching {random_stock}: {e}")
+                pass
     
 async def report(sources):
     while(True):
@@ -162,14 +171,13 @@ async def report(sources):
         time_passed = (dt.datetime.now() - starting_time).total_seconds()
         rate = calls / time_passed
         print(f"Cumulative calls:  {calls}, time passed: {time_passed}, rate at {rate}/sec")
-        await asyncio.sleep(30)
+        await asyncio.sleep(3)
 
 
 async def main():
-    num_of_sources = 1
     sources = [Source() for _ in range(num_of_sources)]
-
     tasks = [asyncio.ensure_future(task(sources[ndx])) for ndx in range(num_of_sources)]
+
     tasks.append(asyncio.ensure_future(report(sources)))
 
     try:
