@@ -101,7 +101,6 @@ class Source():
         if self.status == 'running':
             self.status = 'stopped'
             self.next_available_time = dt.datetime.now() + dt.timedelta(seconds=self.suspension_time_on_poor_health)
-            self.session = aiohttp.ClientSession()
 
     async def fetch(self, symbol: str):
         '''
@@ -128,7 +127,7 @@ class Source():
                 data = json.loads(data)
                 self.successful_fetch_counter += 1
         except Exception as e:
-            self.problems.append(Problem(error=e, part='Fetch'))
+            self.problems.append(Problem(error=e, part=f'Fetch: {symbol}'))
 
 
         # process the data
