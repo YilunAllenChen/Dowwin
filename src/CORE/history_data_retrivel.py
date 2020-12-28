@@ -1,7 +1,10 @@
 '''
-This module uploads stock history data to the database.
+Author: Allen Chen
+
+Example program to get data from our database.
+Uncomment any segment of code you deem interesting and run './run hist_data_retrivel' from root.
 '''
-from apis_mongodb import MongoAPI
+from src.apis.mongodb import MongoAPI
 from pprint import pprint
 mongo = MongoAPI()
 

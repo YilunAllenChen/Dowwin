@@ -1,6 +1,6 @@
-from utils_logging import log_error
+from src.util.logging import log_error
 
-class TradingStrategy():
+class TradingStrategy(): 
     '''
     Abstract class that needs to be inherited.
     '''

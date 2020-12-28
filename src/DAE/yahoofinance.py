@@ -1,4 +1,7 @@
 '''
+Author: Allen Chen
+
+
 *WIP* Prototyping fetcher classes used in DAE.
 
 Currently supporting Yahoo Finance API backed by aiohttp client session. Rate is about 8 calls/sec with 99% successful attempts.
@@ -12,9 +15,9 @@ import datetime as dt
 from pprint import pprint
 
 from random import choice
-from data_stock_symbols import stock_symbols
-from utils_decorators import send_error_to_slack_on_exception
-from apis_mongodb import AIOMongoAPI
+from src.data.stock_symbols import stock_symbols
+from src.util.decorators import send_error_to_slack_on_exception
+from src.apis.mongodb import AIOMongoAPI
 
 aiomongo = AIOMongoAPI()
 
@@ -55,7 +58,7 @@ class Source():
         self.status = 'stopped'
 
         # If in poor health, how much time we're giving this source to recover/rest
-        self.suspension_time_on_poor_health = 300
+        self.suspension_time_on_poor_health = 1200
 
         # When will it be available next.
         self.next_available_time = dt.datetime.now()
@@ -102,7 +105,7 @@ class Source():
             self.status = 'stopped'
             self.next_available_time = dt.datetime.now() + dt.timedelta(seconds=self.suspension_time_on_poor_health)
 
-    async def fetch(self, symbol: str):
+    async def fetch(self, symbol: str) -> None:
         '''
         Function fetches information about a specified symbol and updates it to the database. This is an async task/coroutine.
 
@@ -111,7 +114,7 @@ class Source():
         self._health_check()
         while not self._is_ready_to_fetch():
             await asyncio.sleep(1)
-
+        data = {}
         # get the data from remote url.
         try:
             async with self.session.get(f'https://finance.yahoo.com/quote/{symbol}') as resp:
@@ -120,8 +123,6 @@ class Source():
                     '(this)')[0].split(';\n}')[0].strip()
                 data = json.loads(json_str)[
                     'context']['dispatcher']['stores']['QuoteSummaryStore']
-                if data.get('symbol') == None:
-                    print('data seems to be empty? {}, html is {}'.format(data, html))
                 # return data
                 data = json.dumps(data).replace('{}', 'null')
                 data = re.sub(
@@ -130,67 +131,26 @@ class Source():
                 self.successful_fetch_counter += 1
         except Exception as e:
             self.problems.append(Problem(error=e, part=f'Fetch: {symbol}'))
+            return
 
 
         # process the data
-        del data['esgScores']
-        del data['financialsTemplate']
-        del data['pageViews']
-        del data['summaryProfile']
-        del data['upgradeDowngradeHistory']
-        data['timestamp'] = dt.datetime.now()
+        try:
+            if 'symbol' not in data:
+                self.problems.append(Problem(error=Exception("Data acquired is empty"), part='Process'))
+                return
+            data.pop('esgScores')
+            data.pop('financialsTemplate')
+            data.pop('pageViews')
+            data.pop('summaryProfile')
+            data.pop('upgradeDowngradeHistory')
+            data['timestamp'] = dt.datetime.now()
+        except Exception as e:
+            self.problems.append(Problem(error=e, part='Process'))
+            return
 
         # save the data
         try:
             result = await aiomongo.update_stock(data)
         except Exception as e:
             self.problems.append(Problem(error=e, part='Store'))
-
-starting_time = dt.datetime.now()
-
-
-num_of_sources = 20
-
-
-async def task(source):
-    portion = int(len(stock_symbols)/num_of_sources)
-    dedicated_starting_ndx = int(portion * source.id)
-    dedicated_ending_ndx = dedicated_starting_ndx + portion
-    dedicated_list = stock_symbols[dedicated_starting_ndx:dedicated_starting_ndx+portion]
-    # print(f"Source [{source.id}] is assigned stocks: {dedicated_list}")
-    while(True):
-        for stock in dedicated_list:
-            try:
-                await source.fetch(stock)
-            except Exception as e:
-                print(f"Exception Encountered with Source [{source.id}] fetching {stock}: {e}")
-                pass
-    
-async def report(sources):
-    while(True):
-        calls = sum([source.successful_fetch_counter for source in sources])
-        time_passed = (dt.datetime.now() - starting_time).total_seconds()
-        rate = calls / time_passed
-        print(f"Cumulative calls:  {calls}, time passed: {time_passed}, rate at {rate}/sec")
-        await asyncio.sleep(30)
-
-
-async def main():
-    sources = [Source() for _ in range(num_of_sources)]
-    tasks = [asyncio.ensure_future(task(sources[ndx])) for ndx in range(num_of_sources)]
-
-    tasks.append(asyncio.ensure_future(report(sources)))
-
-    try:
-        returns = await asyncio.gather(*tasks, return_exceptions=True)
-    except Exception as e:
-        print(e)
-        calls = sum([source.counter for source in sources])
-    ending_time = dt.datetime.now()
-
-    time_diff = ending_time - starting_time
-    print(time_diff)
-    print(calls)
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())

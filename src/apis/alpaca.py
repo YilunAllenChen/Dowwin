@@ -1,17 +1,16 @@
 '''
+Author: Allen Chen
+
 This module provides Alpaca APIs to obtain market data, trade with paper money, etc.
 It's said that frequency limit for these apis is 200/min per account. 
 
 Reference / API Documentation: https://alpaca.markets/docs/api-documentation/api-v2/
-
-
-This link might also be useful? Research more: https://stackoverflow.com/questions/25338608/download-all-stock-symbol-list-of-a-market
 '''
 
 import requests
 import json
 from pprint import pprint
-from utils_config import get_global_config
+from src.config.config import get_global_config
 
 
 

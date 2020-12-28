@@ -1,5 +1,14 @@
+'''
+Author: Allen Chen
+
+This module handles the global config of the environment, and should be able to toggle between dev and prod when instructed.
+
+TODO: There must be a better way to do this...
+'''
+
+
 import yaml
-from utils_logging import log_error
+from src.util.logging import log_error
 
 def get_global_config(postfix: str) -> object:
     '''

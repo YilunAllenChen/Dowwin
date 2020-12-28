@@ -1,15 +1,13 @@
-#
-# Darwin Robotics, 2020
-#
-
 '''
+Author: Allen Chen
+
 This module provides async-compatible utilities to interact with the database.
 '''
 import pymongo
 import asyncio
 import motor.motor_asyncio
-from utils_decorators import send_error_to_slack_on_exception
-from utils_config import get_global_config
+from src.util.decorators import send_error_to_slack_on_exception
+from src.config.config import get_global_config
 
 
 class MongoAPI():
@@ -65,7 +63,7 @@ class AIOMongoAPI():
         self.tradebots = self._client['Dowwin']['v1/Tradebots']
         self._market_history = self._client['Dowwin']['v1/market_history']
     
-    async def update_stock(self, data: dict, by='symbol'):
+    async def update_stock(self, data: dict, by='symbol') -> object:
         '''
         Function updates stock market data. Update by name by default.
 
@@ -82,6 +80,7 @@ class AIOMongoAPI():
         result = await self._market.find_one({'symbol': stock})
         return result
 
+# test code for sync
 # if __name__ == "__main__":
 #     mongo = MongoAPI()
 #     mongo.update_stock({
@@ -90,7 +89,7 @@ class AIOMongoAPI():
 #         'timestamp': -1
 #     })
 
-
+# test code for async
 # async def main():
 #     mongo = AIOMongoAPI()
 #     data = {
