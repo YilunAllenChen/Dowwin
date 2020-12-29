@@ -1,5 +1,5 @@
-from utils_logging import log_error
-from apis_slack import SlackAPI
+from src.util.logging import log_error
+from src.apis.slack import SlackAPI
 from datetime import datetime
 
 

@@ -1,9 +1,15 @@
+'''
+Author: Allen Chen
+
+This module provides APIs to interact with our Slack bot.
+'''
+
 import os
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from pprint import pprint
-from utils_logging import log_error
-from utils_config import get_global_config
+from src.util.logging import log_error
+from src.config.config import get_global_config
 
 
 class SlackAPI():
@@ -17,6 +23,11 @@ class SlackAPI():
         self.client = WebClient(token=GLOBAL_CONFIG['SLACK_BOT_TOKEN'])
 
     def send_to_dowwin_channel(self, content: str) -> None:
+        '''
+        Sends a message to the project_dowwin channel on Slack.
+
+        :param content: the content you want to send.
+        '''
         try:
             if len(content) > 0:
                 response = self.client.chat_postMessage(

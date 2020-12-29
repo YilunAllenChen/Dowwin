@@ -1,8 +1,15 @@
+'''
+Author: Allen Chen
+
+Template code that I'm 99% sure we'll delete after we have a working MEE architecture.
+
+'''
+
 from time import time as float_timestamp
 from datetime import datetime as timestamp
-from data_names import choose_random_name
-from utils_config import get_global_config
-from class_Trading_Strategy import get_trading_strategy_object
+from src.data.tradebot_names import choose_random_name
+from src.config.config import get_global_config
+from src.CORE.class_Trading_Strategy import get_trading_strategy_object
 from random import random
 
 STARTING_FUND = 100000
@@ -10,7 +17,7 @@ STARTING_FUND = 100000
 # Good reference from Dowwin Legacy: https://github.com/YilunAllenChen/Dowwin_legacy/blob/master/_Trader.py
 
 class TradeBot():
-    def __init__(*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         # Timestamp is used as the ID of a Tradebot, hence also marks its date of birth.
         self.id = kwargs.get('id', float_timestamp() * 1000)
         # Name of this Tradebot.
@@ -36,9 +43,9 @@ class TradeBot():
         # How frequent this Tradebot performs trading. Randomized between 6 hours to 150 hours.
         self.trading_frequency = kwargs.get('trading_frequency', 6 + 2 * int(random()*72))
         # Last update timestamp.
-        self.last_update = kwargs.get('last_update', timestamp())
+        self.last_update = kwargs.get('last_update', float_timestamp())
         # Next udpate timestamp.
-        self.next_update = kwargs.get('next_update', timestamp())
+        self.next_update = kwargs.get('next_update', float_timestamp())
 
 
 
