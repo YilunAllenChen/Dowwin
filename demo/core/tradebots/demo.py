@@ -1,7 +1,10 @@
+from gym.spaces import space
 import stable_baselines
 from stable_baselines import DQN
 from stable_baselines.common.base_class import BaseRLModel
 from stable_baselines.deepq.policies import MlpPolicy
+
+from gym import spaces
 
 from core import RLStockTradingEnvironment, StockTraderAgent
 
@@ -77,27 +80,33 @@ class DummyRLStockTradingEnvironment(RLStockTradingEnvironment):
         The agent start with a fixed pool of funds and no stock purchased.
     Episode Termination:
         We have reached the end of our data.
-        The agent does not have enough funds to perform an action.
     """
-    def render(self, mode='human'):
-        pass
 
-    def __init__(self) -> None:
+    def __init__(self, stock_data: pd.DataFrame, starting_balance: float) -> None:
         super().__init__()
         self.stock_data: pd.DataFrame = load_data()
         self.data_iterator = self.stock_data.iterrows()
+
+        
+
+        # design these
+        self.observation_space = None
+        self.action_space = spaces.Discrete(3)
 
     def seed(self, seed):
         return super().seed(seed=seed)
 
     def step(self, action):
         # TODO: overrides the default behavior
-        T
+        pass
 
     def reset(self):
         # return super().reset()
         # get a new data iterator
         self.data_iterator = self.stock_data.iterrows()
+
+    def render(self, mode='human'):
+        pass
 
     def close(self):
         return super().close()

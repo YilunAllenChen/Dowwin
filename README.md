@@ -8,9 +8,7 @@ See our [Coda](https://coda.io/d/Project-Dowwin-v1-0_dP7-RL3GJyj/Project-Plannin
 
 ### Setting up the environment
 
-Necessary packages are contained in the [tradebot.yml](./tradebot.yml). To 
-create an environment using this configuration file, ensure that you have a 
-package manager installed on your machine (example: Anaconda/Miniconda, pip).
+Necessary packages are contained in the [tradebot.yml](./tradebot.yml). To create an environment using this configuration file, ensure that you have a package manager installed on your machine (example: Anaconda/Miniconda, pip).
 Run the following commands:
 
 *Anaconda:*
