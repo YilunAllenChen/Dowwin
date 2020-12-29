@@ -1,4 +1,4 @@
-export PYTHONPATH="/home/pi/repos/Dowwin/"
+export PYTHONPATH=$PWD
 
 if [ -z "$1" ]
 then
