@@ -154,8 +154,4 @@ dependencies:
     - scipy==1.5.4
     - stable-baselines==2.10.0
     - urllib3==1.25.11
-variables:
-  HTTP_PROXY: http://127.0.0.1:8889
-  http_proxy: http://127.0.0.1:8889
-  https_proxy: https://127.0.0.1:8889
 prefix: D:\Devs\Anaconda\envs\dowwin

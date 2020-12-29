@@ -52,6 +52,33 @@ class DummyDQNStockTraderAgent(StockTraderAgent):
 
 
 class DummyRLStockTradingEnvironment(RLStockTradingEnvironment):
+    """
+    A dummy stock trading environment for demo purposes,
+    Description:
+        A single stock is available in this environment. The agent starts with
+        some initial funding. The goal of the agent is to maximize the profits.
+    Source:
+        This environment uses a single stock Apple US from the Kaggle stock
+        market dataset available at:
+        https://www.kaggle.com/borismarjanovic/price-volume-data-for-all-us-stocks-etfs
+    Observation:
+        Type: Discrete(3)
+        Num     Observation
+        TBD
+    Actions:
+        Type: Discrete(3)
+        Num     Action
+        0       Buy
+        1       Sell
+        2       Hold
+    Reward:
+        TBD
+    Starting State:
+        The agent start with a fixed pool of funds and no stock purchased.
+    Episode Termination:
+        We have reached the end of our data.
+        The agent does not have enough funds to perform an action.
+    """
     def render(self, mode='human'):
         pass
 
@@ -64,7 +91,8 @@ class DummyRLStockTradingEnvironment(RLStockTradingEnvironment):
         return super().seed(seed=seed)
 
     def step(self, action):
-        return super().step(action)
+        # TODO: overrides the default behavior
+        T
 
     def reset(self):
         # return super().reset()
