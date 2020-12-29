@@ -1,5 +1,5 @@
 import yaml
-from src.util.logging import log_error
+from util.logging import log_error
 
 def get_global_config(postfix: str) -> object:
     '''

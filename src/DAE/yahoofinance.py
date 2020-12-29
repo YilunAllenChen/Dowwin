@@ -21,14 +21,17 @@ from src.apis.mongodb import AIOMongoAPI
 
 aiomongo = AIOMongoAPI()
 
+
 class Problem():
     '''
     Generic Struct-like class to store timestamped exceptions.
     '''
+
     def __init__(self, error: Exception, part: str):
         self.timestamp = dt.datetime.now()
         self.error = error
         self.part = part
+
 
 class Source():
     '''
@@ -37,6 +40,7 @@ class Source():
 
     '''
     id = 0
+
     def __init__(self):
 
         # Assign unique id.
@@ -49,7 +53,7 @@ class Source():
         # counter for successful fetches. Used in system statistics
         self.successful_fetch_counter = 0
 
-        # Temperary cache for timestamped problems. 'maximum_problems_per_minute' defines the max number of 
+        # Temperary cache for timestamped problems. 'maximum_problems_per_minute' defines the max number of
         # problems that can be stored in problems before an error is thrown and handled.
         self.problems = []
         self.maximum_problems_per_minute = 10
@@ -70,19 +74,20 @@ class Source():
         it will pause operating for [suspension_time_on_poor_health] seconds.
         '''
         # an error will be thrown when _health_check is executed, indicating that this source has encountered too many errors in
-        # the last minute and is hence in poor health. 
+        # the last minute and is hence in poor health.
         def only_keep_problems_in_last_min(problem):
             threshold = dt.datetime.now() - dt.timedelta(minutes=1)
             return problem.timestamp > threshold
 
-        filtered = filter(only_keep_problems_in_last_min ,self.problems)
+        filtered = filter(only_keep_problems_in_last_min, self.problems)
         self.problems = [problem for problem in filtered]
         if len(self.problems) >= 10:
-            error_message = [f"{problem.timestamp.strftime('%m%d%Y %H:%M:%S')} | {problem.part} | {problem.error}" \
-                for problem in self.problems]
+            error_message = [f"{problem.timestamp.strftime('%m%d%Y %H:%M:%S')} | {problem.part} | {problem.error}"
+                             for problem in self.problems]
             self.pause()
-            raise Exception(f"Source [{self.id}] is in poor health and is hence suspended for {self.suspension_time_on_poor_health} seconds. Details: {error_message}")
-            
+            raise Exception(
+                f"Source [{self.id}] is in poor health and is hence suspended for {self.suspension_time_on_poor_health} seconds. Details: {error_message}")
+
     def _is_ready_to_fetch(self) -> bool:
         '''
         Function determines whether this source is ready to fetch by checking its [status] and [next_available_time].
@@ -103,7 +108,8 @@ class Source():
         '''
         if self.status == 'running':
             self.status = 'stopped'
-            self.next_available_time = dt.datetime.now() + dt.timedelta(seconds=self.suspension_time_on_poor_health)
+            self.next_available_time = dt.datetime.now(
+            ) + dt.timedelta(seconds=self.suspension_time_on_poor_health)
 
     async def fetch(self, symbol: str) -> None:
         '''
@@ -133,11 +139,11 @@ class Source():
             self.problems.append(Problem(error=e, part=f'Fetch: {symbol}'))
             return
 
-
         # process the data
         try:
             if 'symbol' not in data:
-                self.problems.append(Problem(error=Exception("Data acquired is empty"), part='Process'))
+                self.problems.append(Problem(error=Exception(
+                    "Data acquired is empty"), part='Process'))
                 return
             data.pop('esgScores')
             data.pop('financialsTemplate')
