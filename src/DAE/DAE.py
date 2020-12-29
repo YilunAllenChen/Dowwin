@@ -36,14 +36,16 @@ async def task(source):
                 pass
 
 async def moderator(sources):
+    global idle_time
     while(True):
         calls = sum([source.successful_fetch_counter for source in sources])
         time_passed = (dt.datetime.now() - starting_time).total_seconds()
         rate = calls / time_passed
         if rate > rate_max:
-            idle_time += 0.2
+            idle_time += 0.05
         else:
-            idle_time -= 0.2
+            if idle_time > 0:
+                idle_time -= 0.05
         await asyncio.sleep(10)
 
 

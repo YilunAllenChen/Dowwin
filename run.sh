@@ -1,4 +1,4 @@
-export PYTHONPATH="/home/allen/repos/Dowwin/"
+export PYTHONPATH="/home/pi/repos/Dowwin/"
 
 if [ -z "$1" ]
 then
