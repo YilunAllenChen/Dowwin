@@ -45,10 +45,8 @@ class Source():
 
         # Assign unique id.
         self.id = Source.id
+        self.name = "Generic Source"
         Source.id += 1
-
-        # Start an asyncio http session
-        self.session = aiohttp.ClientSession()
 
         # counter for successful fetches. Used in system statistics
         self.successful_fetch_counter = 0
@@ -111,6 +109,19 @@ class Source():
             self.next_available_time = dt.datetime.now(
             ) + dt.timedelta(seconds=self.suspension_time_on_poor_health)
 
+    def fetch(self) -> None:
+        raise Exception("Can't use Source class. It's abstract.")
+
+
+
+class YahooFinance(Source):
+    def __init__(self):
+        super(YahooFinance, self).__init__()
+
+        # Start an asyncio http session
+        self.session = aiohttp.ClientSession()
+        self.name = "\33[34mYahooFinance\33[0m"
+
     async def fetch(self, symbol: str) -> None:
         '''
         Function fetches information about a specified symbol and updates it to the database. This is an async task/coroutine.
@@ -158,5 +169,51 @@ class Source():
         # save the data
         try:
             result = await aiomongo.update_stock(data)
+        except Exception as e:
+            self.problems.append(Problem(error=e, part='Store'))
+
+class PolygonIO(Source):
+    def __init__(self):
+        super(PolygonIO,self).__init__()
+        self.name = "\33[95mPolygon.io\33[0m"
+        self.session = aiohttp.ClientSession()
+        self.suspension_time_on_poor_health = 1200
+
+    async def fetch(self, symbol: str) -> None:
+        '''
+        Function fetches information about a specified symbol and updates it to the database. This is an async task/coroutine.
+
+        :param symbol: symbol of stock in string format. Example: "AAPL" for Apple Inc.
+        '''
+        self._health_check()
+        while not self._is_ready_to_fetch():
+            await asyncio.sleep(1)
+        data = {}
+        # get the data from remote url.
+        try:
+            async with self.session.get(f'https://api.polygon.io/v2/reference/financials/{symbol}?limit=100&apiKey=l8F1zwzMHDNj6fi0ZFW02kDCJoRZNW0O') as resp:
+                html = await resp.text()
+                data = json.loads(html)
+                if data['status'] == 'ERROR':
+                    self.problems.append(Problem(error=data['error'].split(",")[0], part='Fetch'))
+                    return
+                self.successful_fetch_counter += 1
+        except Exception as e:
+            self.problems.append(Problem(error=e, part=f'Fetch: {symbol}'))
+            return
+
+        # process the data
+        try:
+            writeback = {
+                "symbol": symbol,
+                "historical_financials": data['results']
+            }
+        except Exception as e:
+            self.problems.append(Problem(error=e, part='Process'))
+            return
+
+        # save the data
+        try:
+            result = await aiomongo.update_stock(writeback)
         except Exception as e:
             self.problems.append(Problem(error=e, part='Store'))
