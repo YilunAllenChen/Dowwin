@@ -16,7 +16,6 @@ starting_time = dt.datetime.now()
 # number of sources defines how many asynchronous web scraping coroutines will run at the same time.
 yahoo_finance_num_sources = 10
 yahoo_finance_idle_time = 0.5
-yahoo_finance_rate_max = 8
 
 polygonio_num_sources = 1
 polygonio_idle_time = 12
@@ -24,6 +23,7 @@ polygonio_idle_time = 12
 
 # A task lets a source fetches information on its dedicated segment of stocks and udpates them to the database.
 async def yahoo_finance_task(source):
+    global yahoo_finance_idle_time
     portion = int(len(stock_symbols) / yahoo_finance_num_sources)
     dedicated_starting_ndx = int(portion * source.id)
     dedicated_ending_ndx = dedicated_starting_ndx + portion
@@ -41,21 +41,6 @@ async def yahoo_finance_task(source):
                     f"Exception Encountered with Source [{source.name}.{source.id}] fetching {stock}: {e}"
                 )
                 pass
-
-
-async def yahoo_finance_adaptive_controller(sources):
-    global yahoo_finance_idle_time
-    while True:
-        calls = sum([source.successful_fetch_counter for source in sources])
-        time_passed = (dt.datetime.now() - starting_time).total_seconds()
-        rate = calls / time_passed
-        if rate > yahoo_finance_rate_max:
-            yahoo_finance_idle_time += 0.05
-        else:
-            if yahoo_finance_idle_time > 0:
-                yahoo_finance_idle_time -= 0.05
-        await aio.sleep(10)
-
 
 
 async def polygonio_task(source: PolygonIO):
@@ -109,9 +94,6 @@ async def main():
     # Initialize tasks and assign each task a source to work with.
     tasks = [aio.ensure_future(yahoo_finance_task(
         sources[ndx])) for ndx in range(yahoo_finance_num_sources)]
-    tasks.append(aio.ensure_future(
-        yahoo_finance_adaptive_controller(sources)))
-
 
     sources.append(PolygonIO())
     tasks.append(aio.ensure_future(polygonio_task(sources[-1])))
