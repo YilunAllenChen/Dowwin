@@ -23,6 +23,13 @@ class MongoAPI():
         self._market = self._client['Dowwin']['v1/market']
         self.tradebots = self._client['Dowwin']['v1/Tradebots']
         self._market_history = self._client['Dowwin']['v1/market_history']
+        self._users = self._client['Dowwin']['v0/users']
+
+    def insert_dummy_document(self) -> None:
+        self._users.insert_one({
+            "foo": "bar",
+            "password" :"whatever"
+        })
 
     @send_error_to_slack_on_exception
     def update_stock(self, data: dict, by='symbol') -> None:
@@ -81,13 +88,22 @@ class AIOMongoAPI():
         return result
 
 # test code for sync
-# if __name__ == "__main__":
-#     mongo = MongoAPI()
-#     mongo.update_stock({
-#         'symb': "HELLO_WORLD",
-#         'price': 100,
-#         'timestamp': -1
-#     })
+if __name__ == "__main__":
+    mongo = MongoAPI()
+    print("whatever")
+
+    mongo.insert_dummy_document()
+
+
+    res = mongo._users.find_one({"foo": "bar"})
+    print(res)
+    from time import sleep
+    sleep(10)
+    # mongo.update_stock({
+    #     'symb': "HELLO_WORLD",
+    #     'price': 100,
+    #     'timestamp': -1
+    # })
 
 # test code for async
 # async def main():
