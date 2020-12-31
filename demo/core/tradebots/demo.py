@@ -107,53 +107,33 @@ class DummyRLStockTradingEnvironment(RLStockTradingEnvironment):
         self.stock_data = self.train_data if not self.is_testing else self.test_data
 
         # TODO: add some more preprocessing to our data to support multiple stocks
-        self.stock_data = self.stock_data[
-            ['Close']]  # use only closing price, make sure to pass in a list to get a DataFrame and not a Series
         # TODO: design these
-        num_total_stocks = 1
-        self.num_total_stocks = num_total_stocks  # FIXME: this should be read from the data
-        self.ASSET_OFFSET = 1
-        self.CURRENT_DATA_OFFSET = self.num_total_stocks + self.ASSET_OFFSET
-
         self.action_space: gym.spaces.Discrete = gym.spaces.Discrete(
             3)  # Stable baselines DQN only accepts discrete actions
         self.observation_space: gym.spaces.Box = gym.spaces.Box(
             low=0.0, high=float('inf'),
-            shape=(1 + num_total_stocks * 2, 1)
+            shape=(3,)
         )
-        # TODO: remove
-        # self.observation_space: gym.spaces.Dict = gym.spaces.Dict({
-        #     'balance': gym.spaces.Box(low=0.0, high=float('inf'), shape=(1,)),  # this is the cash balance for our agent
-        #     # assets: for each stock
-        #     #   # shares owned, adjusted total value (= closing price * # shares owned)
-        #     # we only need to know how many shares we are owning
-        #     'assets': gym.spaces.Box(low=0.0, high=float('inf'), shape=(self.num_total_stocks, 1)),
-        #     # stock data: closing price of our stocks for this observation
-        #     'current_data': gym.spaces.Box(low=float('-inf'), high=float('inf'), shape=(self.num_total_stocks, 1))
-        # })
 
         # environment configurations
         self.starting_balance: float = starting_balance
-        # assembles the starting assets (no stocks owned)
-        self.starting_assets: np.ndarray = np.zeros(shape=(self.num_total_stocks, 1))
+        # assembles the starting shares owned
+        self.starting_assets: float = 0.0
 
         # utilities for updating the environment
         self.data_iterator = self.stock_data.iterrows()
 
         # updated in run time
         self.balance: float = self.starting_balance
-        self.assets: np.ndarray = self.starting_assets.copy()  # copy to prevent modifications on the original
+        self.assets: float = self.starting_assets
         # current/previous data in this dummy demo are num stocks x 1 numpy arrays
-        self.current_data: np.ndarray = np.zeros(shape=(self.num_total_stocks, 1))  # this will be populated immediately
-        self.previous_data: np.ndarray = np.zeros(shape=(self.num_total_stocks, 1))
+        self.current_data: float = 0.0
+        self.previous_data: float = 0.0
         # load the first piece of stock data
         self.update_current_data()
 
-    def __get_observations__(self) -> dict:
-        observation = np.zeros(shape=self.observation_space.shape)
-        observation[0] = self.balance
-        observation[self.ASSET_OFFSET: self.CURRENT_DATA_OFFSET] = self.assets
-        observation[self.CURRENT_DATA_OFFSET:] = self.current_data
+    def __get_observations__(self) -> np.ndarray:
+        return np.array([self.balance, self.assets, self.current_data])
 
     def update_current_data(self) -> None:
         """
@@ -194,11 +174,11 @@ class DummyRLStockTradingEnvironment(RLStockTradingEnvironment):
 
         # FIXME: hook stock_id up with other methods to change the buy/sell/hold behavior
         stock_id = 0
-        if action is DummyRLStockTradingEnvironment.ACTION_BUY:
+        if action == DummyRLStockTradingEnvironment.ACTION_BUY:
             number_change = 1
-        elif action is DummyRLStockTradingEnvironment.ACTION_SELL:
+        elif action == DummyRLStockTradingEnvironment.ACTION_SELL:
             number_change = -1
-        elif action is DummyRLStockTradingEnvironment.ACTION_HOLD:
+        elif action == DummyRLStockTradingEnvironment.ACTION_HOLD:
             number_change = 0
         else:
             raise RuntimeError(f'Action {action} is undefined in this environment!')
@@ -207,23 +187,24 @@ class DummyRLStockTradingEnvironment(RLStockTradingEnvironment):
         # this is equivalent to the changes in the total asset values
         # 0. calculate the previous account worth
         # FIXME: rigid implementation
-        previous_asset_worth = (self.assets[:, 0].reshape((-1, 1)) * self.previous_data).sum()
-        current_asset_worth = (self.assets[:, 0].reshape((-1, 1)) * self.current_data).sum()
-        reward = current_asset_worth - previous_asset_worth
+        previous_asset_worth = self.assets * self.previous_data
+        current_asset_worth = self.assets * self.current_data
+        reward = current_asset_worth - previous_asset_worth + 100.0 # skew towards buying
 
         # 1. grab the stock information to process the agent action
         # FIXME: rigid implementation
-        closing_price = self.current_data[stock_id].item()
+        closing_price = self.current_data
         price_change = number_change * closing_price  # money spent buying the stock is positive
 
         # 2. update the asset and balance for the agent
         # FIXME: rigid implementation
         self.balance -= price_change
-        self.assets[stock_id] += number_change
+        self.assets += number_change
 
         # 3. check action validity
         # FIXME: replace this with a method to customize the stopping condition
-        if self.balance < 0.0:
+        if self.balance < 0.0 or self.assets < 0.0:
+            # you cannot buy with things you dont have and you cannot sell things you dont have
             # invalid action
             reward = -10000
             should_terminate = True
@@ -247,9 +228,9 @@ class DummyRLStockTradingEnvironment(RLStockTradingEnvironment):
 
         # reset the variables
         self.balance = self.starting_balance
-        self.assets = self.starting_assets.copy()
-        self.current_data = np.ndarray([])
-        self.previous_data = np.ndarray([])
+        self.assets = self.starting_assets
+        self.current_data = 0.0
+        self.previous_data = 0.0
         # load the first piece of stock data
         self.update_current_data()
 
@@ -261,7 +242,7 @@ class DummyRLStockTradingEnvironment(RLStockTradingEnvironment):
     def close(self):
         return super().close()
 
-    def shoud_stop(self):
+    def should(self):
         return self.balance < 0.0
 
     def set_testing(self, test: bool) -> None:
@@ -273,67 +254,92 @@ class DummyRLStockTradingEnvironment(RLStockTradingEnvironment):
         self.is_testing = test
 
 
-# FIXME: remove
-# class DummyRLEnvironment(gym.Env):
-#     goal_position = np.array([0.0, 0.0])
-#
-#     """
-#     A simple move rule. The intended effect is to teach our agent to take action 1
-#     because that is the only possible action to let our agent reach the goal position
-#     """
-#     move_rule = [
-#         np.array([-0.05, -0.05]),
-#         np.array([0.05, 0.0]),
-#         np.array([0.0, 0.05]),
-#         np.array([0.05, 0.05])
-#     ]
-#
-#     def __init__(self):
-#         self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(2,))
-#         self.action_space = gym.spaces.Discrete(4)
-#
-#         self.initial_position = np.array([1.0, 1.0])
-#         self.agent_position = self.initial_position
-#         self.previous_agent_position = self.initial_position
-#         self.steps_taken = 0.0
-#
-#     def step(self, action):
-#         # goal: train the agent to stay at (0, 0)
-#
-#         # update agent position
-#         assert action in self.action_space
-#         self.previous_agent_position = self.agent_position  # record previous
-#         # a simple move rule
-#         move_delta = self.move_rule[action]
-#         self.agent_position += move_delta
-#
-#         out_of_bounds = not self.observation_space.contains(self.agent_position)
-#         current_distance = np.linalg.norm(self.agent_position - self.goal_position)
-#         if not out_of_bounds:
-#             # reward is the reduction (positive indicates reduction) in distance between the agent position and the
-#             goal position
-#             # previous_distance = np.linalg.norm(self.previous_agent_position - self.goal_position)
-#             #
-#             # reward = -(current_distance - previous_distance)
-#             reward = np.linalg.norm(np.array([1.0, 1.0]) - self.agent_position) - self.steps_taken
-#         else:
-#             reward = -100
-#
-#         is_done = out_of_bounds or current_distance <= 1e-5
-#         observations = self.agent_position
-#
-#         return observations, reward, is_done, {}
-#
-#     def reset(self):
-#         self.steps_taken = 0.0
-#         self.initial_position = np.array([1.0, 1.0])
-#         self.agent_position = self.initial_position
-#         self.previous_agent_position = self.initial_position
-#
-#         return self.agent_position
-#
-#     def render(self, mode='human'):
-#         pass
+class DummyEnvironment(RLStockTradingEnvironment):
+
+    ACTION_BUY = 0
+    ACTION_SELL = 1
+    ACTION_HOLD = 2
+
+    def __init__(self):
+        super().__init__()
+        self.action_space = gym.spaces.Discrete(3)
+        # balance, shares owned, current price
+        self.observation_space = gym.spaces.Box(low=0.0, high=float('inf'), shape=(3,))
+        self.starting_balance = 1e3
+        self.starting_shares = 0.0
+
+        self.balance = self.starting_balance
+        self.shares = self.starting_shares
+
+        # load data
+        self.train_data, self.test_data = split_train_val()
+        self.train_data, self.test_data = self.train_data[['Close']], self.test_data[['Close']]
+        self.stock_data: pd.DataFrame = self.train_data
+
+        # variables
+        # FIXME: rigid implementation
+        self.current_closing_price = 0.0
+        self.previous_closing_price = 0.0
+
+        # utilities
+        self.data_iterator = self.stock_data.iterrows()
+
+        # load in the first sample
+        self.update_current_data()
+
+    def update_current_data(self) -> None:
+        # FIXME: rigid implementation
+        index, data = next(self.data_iterator)
+        self.previous_closing_price = self.current_closing_price
+        self.current_closing_price = data.item()
+
+    def step(self, action):
+        should_terminate = False
+
+        if action == DummyRLStockTradingEnvironment.ACTION_BUY:
+            number_change = 1
+        elif action == DummyRLStockTradingEnvironment.ACTION_SELL:
+            number_change = -1
+        elif action == DummyRLStockTradingEnvironment.ACTION_HOLD:
+            number_change = 0
+        else:
+            raise RuntimeError(f'Action {action} is undefined in this environment!')
+        # calculate change in total account worth
+        # FIXME: rigid implementation
+        # NOTE: we have not processed the action yet. The environment is still in the "previous" state at this point
+        #       only the current and previous closing price have been update to reflect the "current" state
+        previous_worth = self.shares * self.previous_closing_price + self.balance
+        current_worth = self.shares * self.current_closing_price + self.balance
+
+        # process action
+        self.shares += number_change
+        self.balance -= number_change * self.previous_closing_price
+
+        # calculate reward
+        # reward = positive increase in total account value
+        if self.balance < 0.0 or self.shares < 0.0:
+            # invalid state
+            reward = -100.0
+            should_terminate = True
+        else:
+            reward = current_worth - previous_worth
+
+        try:
+            self.update_current_data()
+        except StopIteration:
+            should_terminate = True
+        finally:
+            return np.array([self.balance, self.shares, self.previous_closing_price]), reward, should_terminate, {}
+
+    def reset(self):
+        self.data_iterator = self.stock_data.iterrows()
+        self.balance = self.starting_balance
+        self.shares = self.starting_shares
+        self.update_current_data()
+        return np.array([self.balance, self.shares, self.previous_closing_price])
+
+    def render(self, mode='human'):
+        pass
 
 
 def main():
@@ -351,8 +357,8 @@ def main():
     log_message('Initializing environment...')
     starting_balance = 1e5
     # initialize the environment
-    env: DummyRLStockTradingEnvironment = DummyRLStockTradingEnvironment(starting_balance)
-    model = DQN('MlpPolicy', env, learning_rate=1e-3)
+    env: DummyEnvironment = DummyEnvironment()
+    model = A2C('MlpPolicy', env, learning_rate=1e-3)
     agent = DummyDQNStockTraderAgent(model)
 
     start_time = time.time()
@@ -368,42 +374,17 @@ def main():
     for episode in range(num_episodes):
         log_message(f'{"=" * 11}\nEpisode {episode}')
         obs = env.reset()
+        print(obs)
         for timestep in range(max_timesteps):
             log_message(f'Timestep: {timestep}')
             action, _ = model.predict(obs)
             obs, reward, dones, info = env.step(action)
             save_data.append([
-                episode, timestep, action, reward, env.assets.item()
+                episode, timestep, action, float(reward), env.shares, float(env.balance)
             ])
     log_message(f'Saving playback to {save_filename}')
-    pd.DataFrame(save_data, columns=['Episode', 'Timestep', 'Action', 'Reward', 'Shares owned']).to_csv(str(save_filename.absolute()))
+    pd.DataFrame(save_data, columns=['Episode', 'Timestep', 'Action', 'Reward', 'Shares owned', 'Balance']).to_csv(str(save_filename.absolute()))
     log_message(f'Done!')
-
-    # FIXME: remove
-    # # FIXME: maybe find a better way to specify the initial balance? MAYBE?
-    # starting_balance = 1e5
-    # # load stock data
-    # train_data, test_data = split_train_val()
-    # # initialize an environment
-    # env = DummyRLStockTradingEnvironment(stock_data=train_data, starting_balance=starting_balance)
-    # # initialize a model and an agent
-    # model = DQN(MlpPolicy, env, learning_rate=1e-3, prioritized_replay=True)
-    # agent = DummyDQNStockTraderAgent(model)
-    #
-    # # run the environment
-    # total_learning_timesteps = 2e5
-    # agent.model.learn(total_timesteps=total_learning_timesteps)
-    #
-    # # TODO: run our agent through our stock market data
-    # observation_timesteps = int(1e5)
-    # obs = env.reset()
-    # for i in range(observation_timesteps):
-    #     action, states = model.predict(obs)
-    #     obs, rewards, is_done, info = env.step(action)
-    #     print(f'Observations: {obs}\nRewards: {rewards}')
-    #     if is_done:
-    #         break
-    # print('Done!')
     #
     # # TODO: run our agent thorugh our validation market
     pass
