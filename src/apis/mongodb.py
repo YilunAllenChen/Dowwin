@@ -21,15 +21,10 @@ class MongoAPI():
         # TODO: setup environment variables here.
         self._client = pymongo.MongoClient(host=GLOBAL_CONFIG['DATABASE_URL'])
         self._market = self._client['Dowwin']['v1/market']
-        self.tradebots = self._client['Dowwin']['v1/Tradebots']
+        self._tradebots = self._client['Dowwin']['v1/tradebots']
         self._market_history = self._client['Dowwin']['v1/market_history']
         self._users = self._client['Dowwin']['v0/users']
 
-    def insert_dummy_document(self) -> None:
-        self._users.insert_one({
-            "foo": "bar",
-            "password" :"whatever"
-        })
 
     @send_error_to_slack_on_exception
     def update_stock(self, data: dict, by='symbol') -> None:
@@ -67,7 +62,7 @@ class AIOMongoAPI():
         # TODO: setup environment variables here.
         self._client = motor.motor_asyncio.AsyncIOMotorClient(host=GLOBAL_CONFIG['DATABASE_URL'])
         self._market = self._client['Dowwin']['v1/market']
-        self.tradebots = self._client['Dowwin']['v1/Tradebots']
+        self._tradebots = self._client['Dowwin']['v1/tradebots']
         self._market_history = self._client['Dowwin']['v1/market_history']
     
     async def update_stock(self, data: dict, by='symbol') -> object:

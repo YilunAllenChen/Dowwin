@@ -8,7 +8,7 @@ Currently supporting Yahoo Finance API backed by aiohttp client session. Rate is
 '''
 
 import aiohttp
-import asyncio
+import asyncio as aio
 import re
 import json
 import datetime as dt
@@ -18,8 +18,10 @@ from random import choice
 from src.data.stock_symbols import stock_symbols
 from src.util.decorators import send_error_to_slack_on_exception
 from src.apis.mongodb import AIOMongoAPI
+from src.config.config import get_global_config
 
 aiomongo = AIOMongoAPI()
+GLOBAL_CONFIG = get_global_config('development')
 
 
 class Problem():
@@ -117,7 +119,7 @@ class YahooFinance(Source):
     def __init__(self):
         super(YahooFinance, self).__init__()
 
-        # Start an asyncio http session
+        # Start an aio http session
         self.session = aiohttp.ClientSession()
         self.name = "\33[36mYahooFinance\33[0m"
         self.maximum_problems_per_minute = 10
@@ -130,7 +132,7 @@ class YahooFinance(Source):
         '''
         self._health_check()
         while not self._is_ready_to_fetch():
-            await asyncio.sleep(1)
+            await aio.sleep(1)
         data = {}
         # get the data from remote url.
         try:
@@ -174,6 +176,8 @@ class YahooFinance(Source):
 
 
 class PolygonIO(Source):
+    _polygonio_api_key = GLOBAL_CONFIG['POLYGONIO_API_KEY']
+
     def __init__(self):
         super(PolygonIO, self).__init__()
         self.name = "\33[95mPolygon.io\33[0m"
@@ -189,11 +193,11 @@ class PolygonIO(Source):
         '''
         self._health_check()
         while not self._is_ready_to_fetch():
-            await asyncio.sleep(1)
+            await aio.sleep(1)
         data = {}
         # get the data from remote url.
         try:
-            async with self.session.get(f'https://api.polygon.io/v2/reference/financials/{symbol}?limit=100&apiKey=l8F1zwzMHDNj6fi0ZFW02kDCJoRZNW0O') as resp:
+            async with self.session.get(f'https://api.polygon.io/v2/reference/financials/{symbol}?limit=100&apiKey={PolygonIO._polygonio_api_key}') as resp:
                 html = await resp.text()
                 data = json.loads(html)
                 if data['status'] == 'ERROR':
@@ -220,3 +224,65 @@ class PolygonIO(Source):
             result = await aiomongo.update_stock(writeback)
         except Exception as e:
             self.problems.append(Problem(error=e, part='Store'))
+
+
+class Alpaca(Source):
+    _alpaca_key = GLOBAL_CONFIG['ALPACA_API_KEY']
+    _alpaca_secret_key = GLOBAL_CONFIG['ALPACA_API_SECRET_KEY']
+
+    def __init__(self):
+        super(Alpaca, self).__init__()
+        self.name = "\33[93mAlpaca\33[0m"
+        self.session = aiohttp.ClientSession()
+        self.maximum_problems_per_minute = 3
+        self.suspension_time_on_poor_health = 1200
+
+    async def fetch(self, symbol: str) -> None:
+        '''
+        Function fetches information about a specified symbol and updates it to the database. This is an async task/coroutine.
+
+        :param symbol: symbol of stock in string format. Example: "AAPL" for Apple Inc.
+        '''
+        self._health_check()
+        while not self._is_ready_to_fetch():
+            await aio.sleep(1)
+        data = {}
+        # get the data from remote url.
+        try:
+            async with self.session.get(f'https://data.alpaca.markets/v1/last/stocks/{symbol}', headers={
+                'APCA-API-KEY-ID': Alpaca._alpaca_key,
+                'APCA-API-SECRET-KEY': Alpaca._alpaca_secret_key
+            }) as resp:
+                html = await resp.text()
+                data = json.loads(html)
+                self.successful_fetch_counter += 1
+        except Exception as e:
+            self.problems.append(Problem(error=e, part=f'Fetch: {symbol}'))
+            return
+
+        try:
+            if data.pop('status') != 'success':
+                raise Exception(str(data))
+            data['last_traded'] = data['last']
+            data['last_traded'] = data.pop('last')
+        except Exception as e:
+            self.problems.append(Problem(error=e, part="Process"))
+            return
+
+        print(data)
+        # save the data
+        try:
+            result = await aiomongo.update_stock(writeback)
+        except Exception as e:
+            self.problems.append(Problem(error=e, part='Store'))
+
+
+
+async def main():
+    test_source = Alpaca()
+    data = await test_source.fetch("AAPL")
+
+if __name__ == "__main__":
+
+    loop = aio.get_event_loop()
+    loop.run_until_complete(main())
