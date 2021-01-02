@@ -15,10 +15,12 @@ starting_time = dt.datetime.now()
 
 # number of sources defines how many asynchronous web scraping coroutines will run at the same time.
 yahoo_finance_num_sources = 10
-yahoo_finance_idle_time = 0.5
+yahoo_finance_idle_time = 0.7
 
 polygonio_num_sources = 1
 polygonio_idle_time = 12
+
+tradier_idle_time = 1
 
 
 # A task lets a source fetches information on its dedicated segment of stocks and udpates them to the database.
@@ -30,7 +32,7 @@ async def yahoo_finance_task(source):
     dedicated_list = stock_symbols[
         dedicated_starting_ndx: dedicated_starting_ndx + portion
     ]
-    log_ok(f"Source [{source.name}.{source.id}] is assigned stocks: {dedicated_list}")
+    log_ok(f"Source [{source.id}] {source.name} is assigned stocks: {dedicated_list}")
     while True:
         for stock in dedicated_list:
             try:
@@ -38,7 +40,7 @@ async def yahoo_finance_task(source):
                 await aio.sleep(yahoo_finance_idle_time)
             except Exception as e:
                 print(
-                    f"Exception Encountered with Source [{source.name}.{source.id}] fetching {stock}: {e}"
+                    f"Exception Encountered with Source [{source.id}] {source.name} fetching {stock}: {e}"
                 )
                 pass
 
@@ -55,7 +57,6 @@ async def polygonio_task(source: PolygonIO):
                     f"Exception Encountered with Source [{source.name}.{source.id}] fetching {stock}: {e}"
                 )
                 pass
-
 
 async def cli(sources):
     while True:
@@ -98,10 +99,7 @@ async def main():
     sources.append(PolygonIO())
     tasks.append(aio.ensure_future(polygonio_task(sources[-1])))
 
-
     
-
-
     # Finally add a report task to monitor the process.
     tasks.append(aio.ensure_future(cli(sources)))
 

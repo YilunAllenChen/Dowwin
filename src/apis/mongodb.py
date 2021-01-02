@@ -98,7 +98,6 @@ if __name__ == "__main__":
     res = mongo._users.find_one({"foo": "bar"})
     print(res)
     from time import sleep
-    sleep(10)
     # mongo.update_stock({
     #     'symb': "HELLO_WORLD",
     #     'price': 100,

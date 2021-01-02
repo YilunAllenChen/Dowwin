@@ -54,7 +54,7 @@ class Source():
         # Temperary cache for timestamped problems. 'maximum_problems_per_minute' defines the max number of
         # problems that can be stored in problems before an error is thrown and handled.
         self.problems = []
-        self.maximum_problems_per_minute = 10
+        self.maximum_problems_per_minute = 0
 
         # Current status.
         self.status = 'stopped'
@@ -113,14 +113,14 @@ class Source():
         raise Exception("Can't use Source class. It's abstract.")
 
 
-
 class YahooFinance(Source):
     def __init__(self):
         super(YahooFinance, self).__init__()
 
         # Start an asyncio http session
         self.session = aiohttp.ClientSession()
-        self.name = "\33[34mYahooFinance\33[0m"
+        self.name = "\33[36mYahooFinance\33[0m"
+        self.maximum_problems_per_minute = 10
 
     async def fetch(self, symbol: str) -> None:
         '''
@@ -172,11 +172,13 @@ class YahooFinance(Source):
         except Exception as e:
             self.problems.append(Problem(error=e, part='Store'))
 
+
 class PolygonIO(Source):
     def __init__(self):
-        super(PolygonIO,self).__init__()
+        super(PolygonIO, self).__init__()
         self.name = "\33[95mPolygon.io\33[0m"
         self.session = aiohttp.ClientSession()
+        self.maximum_problems_per_minute = 3
         self.suspension_time_on_poor_health = 1200
 
     async def fetch(self, symbol: str) -> None:
@@ -195,7 +197,8 @@ class PolygonIO(Source):
                 html = await resp.text()
                 data = json.loads(html)
                 if data['status'] == 'ERROR':
-                    self.problems.append(Problem(error=data['error'].split(",")[0], part='Fetch'))
+                    self.problems.append(
+                        Problem(error=data['error'].split(",")[0], part='Fetch'))
                     return
                 self.successful_fetch_counter += 1
         except Exception as e:
